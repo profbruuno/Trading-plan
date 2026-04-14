@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Trade Return Simulator · Risk Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: linear-gradient(145deg, #f8faff 0%, #eef1fa 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      margin: 0;
+    }
+    .simulator-card {
+      max-width: 1400px;
+      width: 100%;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 24px;
+      box-shadow: 0 16px 32px -8px rgba(0,20,50,0.12);
+      padding: 1.2rem 1.2rem 1.5rem;
+    }
+    h1 {
+      font-weight: 600;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+      color: #0b1b3a;
+      margin-bottom: 0.2rem;
+    }
+    h1 span {
+      background: #1e3a8a;
+      color: white;
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 30px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+    .subhead {
+      color: #2c3e5c;
+      margin-bottom: 1.2rem;
+      font-weight: 400;
+      border-left: 3px solid #2563eb;
+      padding-left: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+    .seed-note {
+      font-size: 0.75rem;
+      background: #e6edf8;
+      padding: 2px 10px;
+      border-radius: 20px;
+      color: #1e3a6f;
+    }
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem 1.2rem;
+      align-items: flex-end;
+      background: white;
+      padding: 1rem 1.2rem;
+      border-radius: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      margin-bottom: 1.2rem;
+      border: 1px solid #e9eef4;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      min-width: 120px;
+    }
+    .input-group label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+      color: #4b587c;
+      margin-bottom: 2px;
+    }
+    .input-group input {
+      background: #fbfdff;
+      border: 1.5px solid #d9e0eb;
+      border-radius: 14px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #0b1b3a;
+      transition: 0.15s;
+      width: 100%;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 4px;
+    }
+    .checkbox-group label {
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .checkbox-group input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #0f2b5e;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      align-items: center;
+    }
+    .btn {
+      background: white;
+      border: 1.5px solid #d0d9e8;
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: #1e293b;
+      cursor: pointer;
+      transition: 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: #0f2b5e;
+      border-color: #0f2b5e;
+      color: white;
+    }
+    .final-balance-box {
+      display: flex;
+      align-items: baseline;
+      gap: 10px 16px;
+      background: #0b1b3a;
+      color: white;
+      padding: 0.4rem 1.2rem;
+      border-radius: 40px;
+      flex-wrap: wrap;
+    }
+    .final-balance-box .label {
+      font-weight: 400;
+      opacity: 0.9;
+      font-size: 0.8rem;
+    }
+    .final-balance-box .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .table-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+    }
+    .table-wrapper {
+      border-radius: 12px;
+      overflow-x: auto;
+      background: white;
+      border: 1px solid #e2e9f2;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      margin-top: 0.3rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;        /* slightly reduced */
+      white-space: nowrap;
+      font-size: 0.75rem;      /* compact */
+    }
+    th {
+      background: #f0f6ff;
+      color: #1e3a6f;
+      font-weight: 600;
+      font-size: 0.7rem;
+      padding: 0.4rem 0.5rem;  /* tight spacing */
+      text-align: right;
+      border-bottom: 1.5px solid #cdddec;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+      padding-left: 0.8rem;
+    }
+    th:last-child, td:last-child {
+      padding-right: 0.8rem;
+    }
+    td {
+      padding: 0.35rem 0.5rem;  /* minimal padding */
+      text-align: right;
+      border-bottom: 1px solid #eef2f8;
+      font-weight: 500;
+      color: #13294b;
+      font-size: 0.75rem;
+    }
+    .result-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.65rem;
+      text-align: center;
+      min-width: 50px;
+    }
+    .win-badge {
+      background: #e3f5ec;
+      color: #0b5e42;
+    }
+    .loss-badge {
+      background: #fee9e7;
+      color: #b91c1c;
+    }
+    tbody tr:hover {
+      background: #f9fbfe;
+    }
+    .footnote {
+      margin-top: 0.8rem;
+      color: #486183;
+      font-size: 0.7rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .error-message {
+      color: #b91c1c;
+      font-weight: 500;
+      font-size: 0.75rem;
+    }
+    .reset-link {
+      cursor: pointer;
+      color: #2563eb;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .fixed-seed-badge {
+      background: #dbeafe;
+      color: #0351c1;
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 16px;
+    }
+    /* remove all emoji decorations */
+    .no-icon {
+      /* placeholder */
+    }
+  </style>
+</head>
+<body>
+<div class="simulator-card">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+    <h1>
+      Trade Return Simulator
+      <span>RISK CALC</span>
+    </h1>
+    <div class="final-balance-box">
+      <span class="label">Final Balance</span>
+      <span class="value" id="finalBalanceDisplay">$10,000.00</span>
+    </div>
+  </div>
+  <div class="subhead">
+    <span>Position sizing</span>
+    <span class="seed-note" id="seedIndicator">random (each run differs)</span>
+  </div>
+
+  <!-- Input panel - no icons -->
+  <div class="control-panel">
+    <div class="input-group">
+      <label>Starting Capital ($)</label>
+      <input type="number" id="startCapital" value="10000" min="100" step="500">
+    </div>
+    <div class="input-group">
+      <label>Initial Risk %</label>
+      <input type="number" id="riskPercent" value="1.5" min="0.1" max="100" step="0.1">
+    </div>
+    <div class="input-group">
+      <label>Win Rate (%)</label>
+      <input type="number" id="winRate" value="55" min="0" max="100" step="1">
+    </div>
+    <div class="input-group">
+      <label>Number of Trades</label>
+      <input type="number" id="numTrades" value="20" min="1" max="200" step="1">
+    </div>
+    <div class="input-group">
+      <label>Reward:Risk Ratio</label>
+      <input type="number" id="rrRatio" value="2.0" min="0.1" max="20" step="0.1">
+    </div>
+    
+    <div class="checkbox-group">
+      <input type="checkbox" id="fixedSeedCheckbox">
+      <label for="fixedSeedCheckbox">Use fixed seed (repeatable)</label>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-primary" id="runSimBtn">Run Simulation</button>
+      <button class="btn" id="resetTableBtn">Clear</button>
+    </div>
+  </div>
+
+  <div class="table-header-row">
+    <div style="font-weight: 600; color: #1e3a6f; font-size: 0.85rem;">Trade-by-trade detail</div>
+    <div id="fixedSeedMessage" class="fixed-seed-badge" style="display: none;">fixed seed · repeatable</div>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="simulationTable">
+      <thead>
+        <tr>
+          <th>Trade #</th>
+          <th>Result</th>
+          <th>Risk %</th>
+          <th>Balance ($)</th>
+          <th>Risk Amt ($)</th>
+          <th>Profit ($)</th>
+          <th>Equity ($)</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 1.2rem; color: #6b7c9a;">Set parameters and click "Run Simulation"</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="footnote">
+    <span>Risk % applied to current balance · Reward = Risk × R:R · <span id="ruinNote" style="font-weight:500;"></span></span>
+    <span class="reset-link" id="clearTableLink">Clear table</span>
+  </div>
+  <div id="errorMsg" class="error-message" style="margin-top: 4px;"></div>
+</div>
+
+<script>
+  (function(){
+    "use strict";
+
+    const startCapInput = document.getElementById('startCapital');
+    const riskPercentInput = document.getElementById('riskPercent');
+    const winRateInput = document.getElementById('winRate');
+    const numTradesInput = document.getElementById('numTrades');
+    const rrRatioInput = document.getElementById('rrRatio');
+    const fixedSeedCheck = document.getElementById('fixedSeedCheckbox');
+    const runBtn = document.getElementById('runSimBtn');
+    const resetBtn = document.getElementById('resetTableBtn');
+    const clearLink = document.getElementById('clearTableLink');
+    const tbody = document.getElementById('tableBody');
+    const finalBalanceSpan = document.getElementById('finalBalanceDisplay');
+    const errorMsgDiv = document.getElementById('errorMsg');
+    const seedIndicator = document.getElementById('seedIndicator');
+    const fixedSeedMsg = document.getElementById('fixedSeedMessage');
+    const ruinNoteSpan = document.getElementById('ruinNote');
+
+    const FIXED_SEED_VALUE = 123456789;
+
+    function seededRandom(seed) {
+      return function() {
+        seed |= 0; seed = seed + 0x6d2b79f5 | 0;
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    const formatMoney = (value) => {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    };
+
+    function clearError() { errorMsgDiv.textContent = ''; }
+    function showError(msg) { errorMsgDiv.textContent = msg; }
+
+    function clearTable() {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 1.2rem; color: #6b7c9a;">Set parameters and click "Run Simulation"</td></tr>`;
+      ruinNoteSpan.textContent = '';
+    }
+
+    function resetToStartCapital() {
+      let startVal = parseFloat(startCapInput.value);
+      if (isNaN(startVal) || startVal <= 0) startVal = 10000;
+      finalBalanceSpan.textContent = formatMoney(startVal);
+      clearTable();
+      clearError();
+      updateSeedIndicator();
+    }
+
+    function updateSeedIndicator() {
+      if (fixedSeedCheck.checked) {
+        seedIndicator.textContent = 'fixed seed · repeatable';
+        fixedSeedMsg.style.display = 'inline-block';
+      } else {
+        seedIndicator.textContent = 'random (each run differs)';
+        fixedSeedMsg.style.display = 'none';
+      }
+    }
+
+    fixedSeedCheck.addEventListener('change', updateSeedIndicator);
+
+    function runSimulation() {
+      clearError();
+      
+      let startCapital = parseFloat(startCapInput.value);
+      const riskPercent = parseFloat(riskPercentInput.value);
+      const winRate = parseFloat(winRateInput.value);
+      const numTrades = parseInt(numTradesInput.value, 10);
+      const rrRatio = parseFloat(rrRatioInput.value);
+      const useFixedSeed = fixedSeedCheck.checked;
+
+      if (isNaN(startCapital) || startCapital <= 0) { showError('Starting capital must be > 0'); return; }
+      if (isNaN(riskPercent) || riskPercent <= 0 || riskPercent > 100) { showError('Risk % must be 0.1–100'); return; }
+      if (isNaN(winRate) || winRate < 0 || winRate > 100) { showError('Win rate must be 0–100'); return; }
+      if (isNaN(numTrades) || numTrades < 1 || numTrades > 500) { showError('Trades must be 1–500'); return; }
+      if (isNaN(rrRatio) || rrRatio <= 0) { showError('R:R must be > 0'); return; }
+
+      const randomFunc = useFixedSeed ? seededRandom(FIXED_SEED_VALUE) : Math.random;
+      updateSeedIndicator();
+
+      let balance = startCapital;
+      const rows = [];
+      const riskFactor = riskPercent / 100;
+      let ruinOccurred = false;
+      
+      for (let i = 1; i <= numTrades; i++) {
+        const balanceBefore = balance;
+        const riskAmount = balanceBefore * riskFactor;
+        const isWin = randomFunc() * 100 < winRate;
+        const profit = isWin ? (riskAmount * rrRatio) : -riskAmount;
+        balance = balanceBefore + profit;
+        
+        rows.push({
+          tradeNum: i,
+          result: isWin ? 'WIN' : 'LOSS',
+          riskPercentDisplay: riskPercent.toFixed(2) + '%',
+          balanceBefore,
+          riskAmount,
+          profit,
+          equityAfter: balance
+        });
+
+        if (balance <= 0) {
+          ruinOccurred = true;
+          if (i < numTrades) break;
+        }
+      }
+
+      let html = '';
+      let finalBalanceValue = startCapital;
+      
+      if (rows.length === 0) {
+        html = `<tr><td colspan="7" style="text-align: center; padding: 1.2rem;">No trades simulated.</td></tr>`;
+      } else {
+        for (let r of rows) {
+          const badge = r.result === 'WIN' 
+            ? '<span class="result-badge win-badge">WIN</span>' 
+            : '<span class="result-badge loss-badge">LOSS</span>';
+          const profitStyle = r.profit >= 0 ? 'color:#0b5e42;' : 'color:#b91c1c;';
+          html += `<tr>
+            <td>${r.tradeNum}</td>
+            <td>${badge}</td>
+            <td>${r.riskPercentDisplay}</td>
+            <td>${formatMoney(r.balanceBefore)}</td>
+            <td>${formatMoney(r.riskAmount)}</td>
+            <td style="${profitStyle} font-weight:600;">${r.profit >= 0 ? '+' : ''}${formatMoney(r.profit)}</td>
+            <td><strong>${formatMoney(r.equityAfter)}</strong></td>
+          </tr>`;
+        }
+        
+        if (ruinOccurred && rows.length < numTrades) {
+          const lastEq = rows[rows.length-1].equityAfter;
+          html += `<tr style="background: #fff3e6;"><td colspan="7" style="text-align: center; padding: 0.4rem; color: #a13e07; font-weight: 500;">
+            Account ruined after trade #${rows.length}. Simulation stopped.
+          </td></tr>`;
+          finalBalanceValue = lastEq;
+          ruinNoteSpan.textContent = `Ruin at trade ${rows.length}`;
+        } else {
+          finalBalanceValue = rows.length > 0 ? rows[rows.length-1].equityAfter : startCapital;
+          ruinNoteSpan.textContent = ruinOccurred ? `Ruin occurred` : '';
+        }
+      }
+
+      tbody.innerHTML = html;
+      finalBalanceSpan.textContent = formatMoney(finalBalanceValue);
+    }
+
+    runBtn.addEventListener('click', runSimulation);
+    
+    resetBtn.addEventListener('click', () => {
+      resetToStartCapital();
+      updateSeedIndicator();
+    });
+    
+    clearLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      resetToStartCapital();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const defaultCap = parseFloat(startCapInput.value) || 10000;
+      finalBalanceSpan.textContent = formatMoney(defaultCap);
+      clearTable();
+      updateSeedIndicator();
+    });
+
+    startCapInput.addEventListener('input', () => {
+      if (tbody.children.length === 1 && tbody.children[0].children[0].colSpan === 7) {
+        const val = parseFloat(startCapInput.value);
+        finalBalanceSpan.textContent = formatMoney((!isNaN(val) && val > 0) ? val : 10000);
+      }
+    });
+
+    [startCapInput, riskPercentInput, winRateInput, numTradesInput, rrRatioInput].forEach(input => {
+      input.addEventListener('blur', function() {
+        let val = parseFloat(this.value);
+        if (this.id === 'startCapital' && (isNaN(val) || val <= 0)) this.value = 10000;
+        if (this.id === 'riskPercent' && (isNaN(val) || val <= 0)) this.value = 1.5;
+        if (this.id === 'winRate' && (isNaN(val) || val < 0)) this.value = 55;
+        if (this.id === 'numTrades' && (isNaN(val) || val < 1)) this.value = 20;
+        if (this.id === 'rrRatio' && (isNaN(val) || val <= 0)) this.value = 2.0;
+      });
+    });
+
+    updateSeedIndicator();
+  })();
+</script>
+</body>
+        </html>
